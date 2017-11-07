@@ -6,11 +6,7 @@
 #include <GL/freeglut.h>
 #include <iostream>
 #include "maths_funcs.h"
-#include "car.h" // teapot mesh
-
-#include <assimp/Importer.hpp>      // C++ importer interface
-#include <assimp/scene.h>           // Output data structure
-#include <assimp/postprocess.h>     // Post processing flags
+#include "car.h" // car mesh
 
 #pragma warning(disable : 4996)
 // Macro for indexing vertex buffer
