@@ -6,7 +6,7 @@
 #include <GL/freeglut.h>
 #include <iostream>
 #include "maths_funcs.h"
-#include "car.h" // car mesh
+#include "porsche.h" // car mesh
 
 #pragma warning(disable : 4996)
 // Macro for indexing vertex buffer
@@ -17,10 +17,14 @@ using namespace std;
 GLuint shaderProgramID;
 mat4 global_translate_up = identity_mat4();
 mat4 global_translate_down = identity_mat4();
+mat4 view_global = look_at(	vec3(0.0, 0.0, -2.0), 
+							vec3(0.0, 0.0, 0.0), 
+							vec3(0.0, 1.0, 0.0));
 unsigned int teapot_vao = 0;
 int width = 800;
 int height = 600;
 mat4 persp_global = identity_mat4();
+char keyFunction;
 
 
 GLuint loc1;
@@ -163,44 +167,76 @@ mat4 ortho(float left, float right, float bottom, float top, float nearr, float 
 }
 
 void display() {
-
+	mat4 view, persp_proj, root_local, root_global;
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
-
+	
+	
 	//Declare your uniform variables that will be used in your shader
 	int matrix_location = glGetUniformLocation(shaderProgramID, "model");
 	int view_mat_location = glGetUniformLocation(shaderProgramID, "view");
 	int proj_mat_location = glGetUniformLocation(shaderProgramID, "proj");
 
-	// Hierarchy of Teapots
-
-	// Root of the Hierarchy
-
-	//mat4 persp_proj = ortho(-width / 10.0, width / 10.0, -height / 10.0, height / 10.0, 0.1, 100.0);
-	mat4 view = identity_mat4();
-	mat4 persp_proj = perspective(50.0, (float)width / (float)height, 0.1, 50.0);
-	mat4 local1 = global_translate_up * global_translate_down;
-	local1 = rotate_z_deg(local1, 30.0f);
-	local1 = rotate_x_deg(local1, -60.0f);
-	local1 = rotate_y_deg(local1, rotatez);
-	local1 = translate(local1, vec3(0.0, 0.0, -2.0f));
-	//local1 = rotate_y_deg(local1, 50.0);
-
-	// for the root, we orient it in global space
-	// multiplied the keypress event matrix to show the keypress
-	mat4 global1 = local1;//* global_translate_up * global_translate_down;
-
-						  // update uniforms & draw
+	// Main Viewport 
+	glViewport(0, 0, width, height);
+	view = identity_mat4();
+	view = view_global;
+	persp_proj = perspective(50.0, (float)width / (float)height, 0.1, 50.0);
+	root_local = global_translate_up * global_translate_down;
+	//local1 = rotate_x_deg(local1, -30.0f);
+	//root_local = rotate_y_deg(root_local, rotatez);
+	//root node 
+	root_global = root_local;
+	// update uniforms & draw
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, global1.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, root_global.m);
 	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
 
 
+	// child nodes 
+	mat4 child_local_1 = identity_mat4();
+	child_local_1 = rotate_x_deg(child_local_1, rotatez);
+	// translation is 15 units in the y direction from the parents coordinate system
+	child_local_1 = translate(child_local_1, vec3(0.0, 1.0, 0.0));
+	child_local_1 = scale(child_local_1, vec3(0.5, 0.5, 0.5));
+	// global of the child is got by pre-multiplying the local of the child by the global of the parent
+	mat4 child_global_1 = root_global * child_local_1;
+
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, child_global_1.m);
+	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
+
+
+	mat4 child_local_2 = identity_mat4();
+	child_local_2 = rotate_y_deg(child_local_2, rotatez);
+	// translation is 15 units in the y direction from the parents coordinate system
+	child_local_2 = translate(child_local_2, vec3(0.0, -1.0, 0.0));
+	child_local_2 = scale(child_local_2, vec3(0.5, 0.5, 0.5));
+	// global of the child is got by pre-multiplying the local of the child by the global of the parent
+	mat4 child_global_2 = root_global * child_local_2;
+
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, child_global_2.m);
+	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
+
+
+
+	// MiniMap Viewport -- Top Left		
+	glViewport(0, 3* height/4 , width/4 , height/4 );
+	glLoadIdentity();
+	view = look_at(vec3(0.0, 15.0, -5.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
+	persp_proj = ortho(-width / 500.0, width / 500.0, -height / 500.0, height / 500.0, 0.1, 100.0);	
+	// update uniforms & draw		
+	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
+	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, root_global.m);
+	// draw child for minimap
+	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, child_global_1.m);
+	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
 
 	glutSwapBuffers();
 }
@@ -227,7 +263,19 @@ void updateScene() {
 void init()
 {
 
+	GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat mat_shininess[] = { 50.0 };
+	GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glShadeModel(GL_SMOOTH);
 
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	// load teapot mesh into a vertex buffer array
@@ -239,19 +287,50 @@ void init()
 // Placeholder code for the keypress
 void keypress(unsigned char key, int x, int y) {
 
-	if (key == 'w') {
+	if (key == 'r' || key == 'R') {
 		global_translate_up = rotate_y_deg(global_translate_up,2.0);
 		glutPostRedisplay();
 	}
-	if (key == 's') {
-		global_translate_down = rotate_y_deg(global_translate_up, 2.0);
+	if (key == 's' || key == 'S') {
+		global_translate_down = scale(global_translate_down, vec3(0.90, 0.90, 0.90));
 		glutPostRedisplay();
 	}
-	if (key == 'v') {
-		//persp_global= ortho(width / 10.0, width / 10.0, height / 10.0, height / 10.0, 0.1, 100.0);
+	if (key == 'w') {
+		global_translate_down = scale(global_translate_down, vec3(1.1, 1.1, 1.1));
 		glutPostRedisplay();
 	}
 }
+
+// Method to handle special keys function
+void keySpecial(int keyspecial, int x, int y) {
+
+		switch (keyspecial)
+		{
+		case GLUT_KEY_UP:
+			view_global = translate(view_global, vec3(0.0, 0.0, 0.009));
+			printf("moveup\n");
+			glutPostRedisplay();
+			break;
+
+		case GLUT_KEY_DOWN:
+			view_global = translate(view_global, vec3(0.0, 0.00, -0.009));
+			printf("movedown\n");
+			glutPostRedisplay();
+			break;
+		case GLUT_KEY_RIGHT:
+			view_global = translate(view_global, vec3(0.009, 0.00, 0.0));
+			printf("moveright\n");
+			glutPostRedisplay();
+			break;
+		case GLUT_KEY_LEFT:
+			view_global = translate(view_global, vec3(-0.009, 0.0, 0.0));
+			printf("moveleft\n");
+			glutPostRedisplay();
+			break;
+		}
+	}
+
+
 
 int main(int argc, char** argv) {
 
@@ -264,7 +343,7 @@ int main(int argc, char** argv) {
 	// Tell glut where the display function is
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
-	glutKeyboardFunc(keypress);
+
 
 	// A call to glewInit() must be done after glut is initialized!
 	GLenum res = glewInit();
@@ -275,6 +354,8 @@ int main(int argc, char** argv) {
 	}
 	// Set up your objects and shaders
 	init();
+	glutKeyboardFunc(keypress);
+	glutSpecialFunc(keySpecial);
 	// Begin infinite event loop
 	glutMainLoop();
 	return 0;
