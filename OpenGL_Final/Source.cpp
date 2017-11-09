@@ -14,7 +14,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <iostream>
-#include "maths_funcs.h"
+#include "maths_funcs.h" 
 #include "../models/porsche.h" // car mesh
 
 #pragma warning(disable : 4996)
@@ -107,7 +107,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 
 GLuint CompileShaders()
 {
-	//Start the process of setting up our shaders by creating a program ID
+	//Start the process of setting up our shaders by creating a program ID	
 	//Note: we will link all the shaders together into this ID
 	shaderProgramID = glCreateProgram();
 	if (shaderProgramID == 0) {
@@ -213,15 +213,15 @@ void display() {
 
 	// Main Viewport 
 	glViewport(0, 0, width, height);
+	root_local = global_translate_up * global_translate_down;
 	view = identity_mat4();
 	view = view_global;
 	persp_proj = perspective(50.0, (float)width / (float)height, 0.1, 50.0);
-	root_local = global_translate_up * global_translate_down;
-	//local1 = rotate_x_deg(local1, -30.0f);
-	//root_local = rotate_y_deg(root_local, rotatez);
+	root_local = rotate_y_deg(root_local,40.0);
+	
 	//root node 
 	root_global = root_local;
-	// update uniforms & draw
+	
 	//Lights initialization and activation
 	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
@@ -248,6 +248,8 @@ void display() {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Polygon rasterization mode (polygon filled)
 	glEnable(GL_CULL_FACE); // Enable the back face culling
 	glEnable(GL_DEPTH_TEST);
+
+	// update uniforms & draw
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, root_global.m);
@@ -257,7 +259,7 @@ void display() {
 	// child nodes 
 	mat4 child_local_1 = identity_mat4();
 	child_local_1 = rotate_x_deg(child_local_1, rotatez);
-	// translation is 15 units in the y direction from the parents coordinate system
+	// translation is 1 units in the y direction from the parents coordinate system
 	child_local_1 = translate(child_local_1, vec3(0.0, 1.0, 0.0));
 	child_local_1 = scale(child_local_1, vec3(0.5, 0.5, 0.5));
 	// global of the child is got by pre-multiplying the local of the child by the global of the parent
@@ -269,7 +271,7 @@ void display() {
 
 	mat4 child_local_2 = identity_mat4();
 	child_local_2 = rotate_y_deg(child_local_2, rotatez);
-	// translation is 15 units in the y direction from the parents coordinate system
+	// translation is -1 units in the y direction from the parents coordinate system
 	child_local_2 = translate(child_local_2, vec3(0.0, -1.0, 0.0));
 	child_local_2 = scale(child_local_2, vec3(0.5, 0.5, 0.5));
 	// global of the child is got by pre-multiplying the local of the child by the global of the parent
@@ -277,7 +279,6 @@ void display() {
 
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, child_global_2.m);
 	glDrawArrays(GL_TRIANGLES, 0, teapot_vertex_count);
-
 
 
 	// MiniMap Viewport -- Top Left		
@@ -320,8 +321,6 @@ void init()
 {
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-
-
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	// load teapot mesh into a vertex buffer array
@@ -333,8 +332,6 @@ void init()
 	};
 
 	generateObjectBufferTeapot(colors);
-
-
 }
 
 // Placeholder code for the keypress
@@ -342,14 +339,17 @@ void keypress(unsigned char key, int x, int y) {
 
 	if (key == 'r' || key == 'R') {
 		global_translate_up = rotate_y_deg(global_translate_up,2.0);
+		printf("rotate_y\n");
 		glutPostRedisplay();
 	}
 	if (key == 's' || key == 'S') {
 		global_translate_down = scale(global_translate_down, vec3(0.90, 0.90, 0.90));
+		printf("scaledown\n");
 		glutPostRedisplay();
 	}
-	if (key == 'w') {
+	if (key == 'w' || key == 'W') {
 		global_translate_down = scale(global_translate_down, vec3(1.1, 1.1, 1.1));
+		printf("scaleup\n");
 		glutPostRedisplay();
 	}
 }
@@ -361,23 +361,23 @@ void keySpecial(int keyspecial, int x, int y) {
 		{
 		case GLUT_KEY_UP:
 			view_global = translate(view_global, vec3(0.0, 0.0, 0.009));
-			printf("moveup\n");
+			printf("cameramoveup\n");
 			glutPostRedisplay();
 			break;
 
 		case GLUT_KEY_DOWN:
 			view_global = translate(view_global, vec3(0.0, 0.00, -0.009));
-			printf("movedown\n");
+			printf("cameramovedown\n");
 			glutPostRedisplay();
 			break;
 		case GLUT_KEY_RIGHT:
 			view_global = translate(view_global, vec3(0.009, 0.00, 0.0));
-			printf("moveright\n");
+			printf("cameramoveright\n");
 			glutPostRedisplay();
 			break;
 		case GLUT_KEY_LEFT:
 			view_global = translate(view_global, vec3(-0.009, 0.0, 0.0));
-			printf("moveleft\n");
+			printf("cameramoveleft\n");
 			glutPostRedisplay();
 			break;
 		}
