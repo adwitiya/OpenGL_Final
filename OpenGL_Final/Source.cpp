@@ -14,6 +14,18 @@
 
 using namespace std;
 
+//Lights settings
+GLfloat light_ambient[] = { 0.1f, 0.1f, 0.1f, 0.1f };
+GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+GLfloat light_position[] = { 100.0f, 0.0f, -10.0f, 1.0f };
+GLfloat dirVector0[] = { 1.0, 0.0, 0.0, 0.0 };
+//Materials settings
+GLfloat mat_ambient[] = { 0.5f, 0.5f, 0.0f, 0.0f };
+GLfloat mat_diffuse[] = { 0.5f, 0.5f, 0.0f, 0.0f };
+GLfloat mat_specular[] = { 1.0f, 1.0f, 1.0f, 0.0f };
+GLfloat mat_shininess[] = { 1.0f };
+
 GLuint shaderProgramID;
 mat4 global_translate_up = identity_mat4();
 mat4 global_translate_down = identity_mat4();
@@ -130,7 +142,7 @@ GLuint CompileShaders()
 // VBO Functions - click on + to expand
 #pragma region VBO_FUNCTIONS
 
-void generateObjectBufferTeapot() {
+void generateObjectBufferTeapot(GLfloat colors[]) {
 	GLuint vp_vbo = 0;
 
 	loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
@@ -139,20 +151,28 @@ void generateObjectBufferTeapot() {
 	glGenBuffers(1, &vp_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
 	glBufferData(GL_ARRAY_BUFFER, 3 * teapot_vertex_count * sizeof(float), teapot_vertex_points, GL_STATIC_DRAW);
+
+
+
 	GLuint vn_vbo = 0;
 	glGenBuffers(1, &vn_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glBufferData(GL_ARRAY_BUFFER, 3 * teapot_vertex_count * sizeof(float), teapot_normals, GL_STATIC_DRAW);
 
+
 	glGenVertexArrays(1, &teapot_vao);
 	glBindVertexArray(teapot_vao);
+
 
 	glEnableVertexAttribArray(loc1);
 	glBindBuffer(GL_ARRAY_BUFFER, vp_vbo);
 	glVertexAttribPointer(loc1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
 	glEnableVertexAttribArray(loc2);
 	glBindBuffer(GL_ARRAY_BUFFER, vn_vbo);
 	glVertexAttribPointer(loc2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+
 }
 
 
@@ -170,6 +190,7 @@ void display() {
 	mat4 view, persp_proj, root_local, root_global;
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
+	glMatrixMode(GL_PROJECTION); 
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -192,6 +213,32 @@ void display() {
 	//root node 
 	root_global = root_local;
 	// update uniforms & draw
+	//Lights initialization and activation
+	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_specular);
+	glLightfv(GL_LIGHT1, GL_POSITION, light_position);
+	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0);// set cutoff angle
+	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, dirVector0);
+	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 1);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT1);
+
+	glEnable(GL_LIGHTING);
+
+	//Materials initialization and activation
+	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_specular);
+	glMaterialfv(GL_FRONT, GL_POSITION, mat_shininess);
+
+	//Other initializations
+	glShadeModel(GL_SMOOTH); // Type of shading for the polygons
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Texture mapping perspective correction
+	glEnable(GL_TEXTURE_2D); // Texture mapping ON
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Polygon rasterization mode (polygon filled)
+	glEnable(GL_CULL_FACE); // Enable the back face culling
+	glEnable(GL_DEPTH_TEST);
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, root_global.m);
@@ -228,7 +275,7 @@ void display() {
 	glViewport(0, 3* height/4 , width/4 , height/4 );
 	glLoadIdentity();
 	view = look_at(vec3(0.0, 15.0, -5.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-	persp_proj = ortho(-width / 500.0, width / 500.0, -height / 500.0, height / 500.0, 0.1, 100.0);	
+	persp_proj = ortho(-width / 1000.0, width / 1000.0, -height / 1000.0, height / 1000.0, 0.1, 100.0);	
 	// update uniforms & draw		
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, view.m);
@@ -263,23 +310,20 @@ void updateScene() {
 void init()
 {
 
-	GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-	GLfloat mat_shininess[] = { 50.0 };
-	GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-	glShadeModel(GL_SMOOTH);
 
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_DEPTH_TEST);
 	// Set up the shaders
 	GLuint shaderProgramID = CompileShaders();
 	// load teapot mesh into a vertex buffer array
-	generateObjectBufferTeapot();
+
+	GLfloat colors[] = {
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+	};
+
+	generateObjectBufferTeapot(colors);
 
 
 }
