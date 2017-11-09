@@ -1,4 +1,13 @@
-
+#/*********************************************************************/
+//   source.cpp -- Implementation of OpenGL using C++				   *
+//		 Author:  Adwitiya Chakraborty                                 *
+//                                                                     *
+//      Purpose: Evaluate OpenGL and different techniques using C++	   *
+//                                                                     *
+// GitHub Repo : https://github.com/adwitiya/OpenGL_Final			   *
+//		 Email : chakraad@tcd.ie									   *
+//  Build Date : 07.11.2017											   *
+#/*********************************************************************/
 //Some Windows Headers (For Time, IO, etc.)
 #include <windows.h>
 #include <mmsystem.h>
@@ -6,7 +15,7 @@
 #include <GL/freeglut.h>
 #include <iostream>
 #include "maths_funcs.h"
-#include "porsche.h" // car mesh
+#include "../models/porsche.h" // car mesh
 
 #pragma warning(disable : 4996)
 // Macro for indexing vertex buffer

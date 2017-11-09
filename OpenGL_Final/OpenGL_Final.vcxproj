@@ -131,9 +131,8 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="car.h" />
+    <ClInclude Include="..\models\porsche.h" />
     <ClInclude Include="maths_funcs.h" />
-    <ClInclude Include="teapot.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -23,13 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="teapot.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="maths_funcs.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="car.h">
+    <ClInclude Include="..\models\porsche.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
