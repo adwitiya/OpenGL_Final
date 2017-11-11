@@ -23,22 +23,10 @@
 
 using namespace std;
 
-//Lights settings
-GLfloat light_ambient[] = { 0.1f, 0.1f, 0.1f, 0.1f };
-GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 0.0f };
-GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 0.0f };
-GLfloat light_position[] = { 100.0f, 0.0f, -10.0f, 1.0f };
-GLfloat dirVector0[] = { 1.0, 0.0, 0.0, 0.0 };
-//Materials settings
-GLfloat mat_ambient[] = { 0.5f, 0.5f, 0.0f, 0.0f };
-GLfloat mat_diffuse[] = { 0.5f, 0.5f, 0.0f, 0.0f };
-GLfloat mat_specular[] = { 1.0f, 1.0f, 1.0f, 0.0f };
-GLfloat mat_shininess[] = { 1.0f };
-
 GLuint shaderProgramID;
 mat4 global_translate_up = identity_mat4();
 mat4 global_translate_down = identity_mat4();
-mat4 view_global = look_at(	vec3(0.0, 0.0, -2.0), 
+mat4 view_global = look_at(	vec3(0.0, 0.0, 1.1), 
 							vec3(0.0, 0.0, 0.0), 
 							vec3(0.0, 1.0, 0.0));
 unsigned int teapot_vao = 0;
@@ -151,7 +139,7 @@ GLuint CompileShaders()
 // VBO Functions - click on + to expand
 #pragma region VBO_FUNCTIONS
 
-void generateObjectBufferTeapot(GLfloat colors[]) {
+void generateObjectBufferTeapot() {
 	GLuint vp_vbo = 0;
 
 	loc1 = glGetAttribLocation(shaderProgramID, "vertex_position");
@@ -217,37 +205,12 @@ void display() {
 	view = identity_mat4();
 	view = view_global;
 	persp_proj = perspective(50.0, (float)width / (float)height, 0.1, 50.0);
-	root_local = rotate_y_deg(root_local,40.0);
+	root_local = rotate_y_deg(root_local,-90.0);
+	//root_local = scale(root_local, vec3(1.1,1.1,1.1));
 	
 	//root node 
 	root_global = root_local;
 	
-	//Lights initialization and activation
-	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_specular);
-	glLightfv(GL_LIGHT1, GL_POSITION, light_position);
-	glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 30.0);// set cutoff angle
-	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, dirVector0);
-	glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 1);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT1);
-
-	glEnable(GL_LIGHTING);
-
-	//Materials initialization and activation
-	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_specular);
-	glMaterialfv(GL_FRONT, GL_POSITION, mat_shininess);
-
-	//Other initializations
-	glShadeModel(GL_SMOOTH); // Type of shading for the polygons
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); // Texture mapping perspective correction
-	glEnable(GL_TEXTURE_2D); // Texture mapping ON
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Polygon rasterization mode (polygon filled)
-	glEnable(GL_CULL_FACE); // Enable the back face culling
-	glEnable(GL_DEPTH_TEST);
 
 	// update uniforms & draw
 	glUniformMatrix4fv(proj_mat_location, 1, GL_FALSE, persp_proj.m);
@@ -258,10 +221,10 @@ void display() {
 
 	// child nodes 
 	mat4 child_local_1 = identity_mat4();
-	child_local_1 = rotate_x_deg(child_local_1, rotatez);
+	child_local_1 = rotate_x_deg(child_local_1,rotatez);
 	// translation is 1 units in the y direction from the parents coordinate system
-	child_local_1 = translate(child_local_1, vec3(0.0, 1.0, 0.0));
-	child_local_1 = scale(child_local_1, vec3(0.5, 0.5, 0.5));
+	child_local_1 = translate(child_local_1, vec3(0.0, 1.15, 0.0));
+	child_local_1 = scale(child_local_1, vec3(0.3, 0.3, 0.3));
 	// global of the child is got by pre-multiplying the local of the child by the global of the parent
 	mat4 child_global_1 = root_global * child_local_1;
 
@@ -272,7 +235,7 @@ void display() {
 	mat4 child_local_2 = identity_mat4();
 	child_local_2 = rotate_y_deg(child_local_2, rotatez);
 	// translation is -1 units in the y direction from the parents coordinate system
-	child_local_2 = translate(child_local_2, vec3(0.0, -1.0, 0.0));
+	child_local_2 = translate(child_local_2, vec3(0.0, -0.7, 0.0));
 	child_local_2 = scale(child_local_2, vec3(0.5, 0.5, 0.5));
 	// global of the child is got by pre-multiplying the local of the child by the global of the parent
 	mat4 child_global_2 = root_global * child_local_2;
@@ -325,13 +288,7 @@ void init()
 	GLuint shaderProgramID = CompileShaders();
 	// load teapot mesh into a vertex buffer array
 
-	GLfloat colors[] = {
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 1.0f,
-	};
-
-	generateObjectBufferTeapot(colors);
+	generateObjectBufferTeapot();
 }
 
 // Placeholder code for the keypress
@@ -352,6 +309,18 @@ void keypress(unsigned char key, int x, int y) {
 		printf("scaleup\n");
 		glutPostRedisplay();
 	}
+
+		if (key == 'd' || key == 'D') {
+			global_translate_up = rotate_x_deg(global_translate_up, 2.0);
+			printf("scaleup\n");
+			glutPostRedisplay();
+		}
+
+		if (key == 'a' || key == 'A') {
+			global_translate_up = rotate_z_deg(global_translate_up, 2.0);
+			printf("scaleup\n");
+			glutPostRedisplay();
+		}
 }
 
 // Method to handle special keys function
@@ -391,7 +360,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(width, height);
-	glutCreateWindow("Hello Hierarchical Transforms");
+	glutCreateWindow("Hello Porsche 911 GT");
 
 	// Tell glut where the display function is
 	glutDisplayFunc(display);
